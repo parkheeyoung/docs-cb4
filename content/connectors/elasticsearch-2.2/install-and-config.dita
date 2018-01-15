@@ -288,7 +288,7 @@ couchbase.maxConcurrentRequests: 1024</codeblock>
 		
 		<p>
 			The procedures and code-examples that you will encounter in the next section, 
-			<xref href="./getting-started.dita" scope="local" format="dita">Getting Started</xref>, 
+			<xref href="./getting-started.html" format="html" scope="local">Getting Started</xref>, 
 			all assume that you have installed and configured Elasticsearch, Couchbase Server, and
 			the Elasticsearch Plug-in precisely as described above.
 		</p>
