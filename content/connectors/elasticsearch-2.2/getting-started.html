@@ -1,3 +1,10 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
 <p>A Couchbase-Elasticsearch data-replication system consists of three principal components:</p>
 <ul>
   <li>a <strong>Couchbase Server cluster</strong> of one or more nodes</li>
@@ -62,13 +69,13 @@ couchbase.maxConcurrentRequests: 1024
 {&quot;acknowledged&quot;:true}
 </code></pre>
 <p>Now to configure Couchbase Server, open the Couchbase Web Console and select <strong>XDCR &gt; Add Remote Cluster</strong>.</p>
-<p><img src="assets/xdcrInitial.png" alt=""></p>
+<p><img src="images/xdcrInitial.png" alt=""></p>
 <p>In the dialog, enter the <strong>Cluster Name</strong> of your choice, the <strong>IP/hostname</strong> and port number where the Elasticsearch cluster is running (the Elasticsearch plugin listens on port 9091 by default) and the <strong>Username</strong>/<strong>Password</strong> previously stored in <strong>elasticsearch.yml</strong>.</p>
-<p><img src="assets/remotecluster.png" alt=""></p>
+<p><img src="images/remotecluster.png" alt=""></p>
 <p>Next, select the <strong>Add Replication</strong> option.</p>
-<p><img src="assets/addreplication.png" alt=""></p>
+<p><img src="images/addreplication.png" alt=""></p>
 <p>On the pop-up window, enter the origin bucket, the remote cluster, and remote bucket (in this case it&#39;s the index that was created earlier). Also make sure that the <strong>XDCR Protocol</strong> version is set to 1 and that the <strong>XDCR Optimistic Replication Threshold</strong> is set to the maximum value of <strong>20971520</strong> for optimal performance. Then click <strong>Save</strong>.</p>
-<p><img src="assets/addreplication-popup.png" alt=""></p>
+<p><img src="images/addreplication-popup.png" alt=""></p>
 <p>Now that the replication is up and running, you can run full-text search queries on the Elasticsearch node.</p>
 <pre><code class="lang-bash">$ curl localhost:9200/travel-sample/_search?q=san+francisco
 
@@ -179,3 +186,5 @@ couchbase.maxConcurrentRequests: 1024
     }
 }
 </code></pre>
+</body>
+</html>
