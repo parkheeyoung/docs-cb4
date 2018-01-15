@@ -1,10 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Title</title>
-</head>
-<body>
 <p>A Couchbase-Elasticsearch data-replication system consists of three principal components:</p>
 <ul>
   <li>a <strong>Couchbase Server cluster</strong> of one or more nodes</li>
@@ -95,5 +88,94 @@ couchbase.maxConcurrentRequests: 1024
     }
 }
 </code></pre>
-</body>
-</html>
+<h2 id="-">---</h2>
+<p>A Couchbase-Elasticsearch data-replication system consists of three principal components:</p>
+<ul>
+  <li>a <strong>Couchbase Server cluster</strong> of one or more nodes</li>
+  <li>an <strong>Elasticsearch cluster</strong> of one or more nodes</li>
+  <li>the <strong>Elasticsearch Transport Plug-in</strong>, installed in the Elasticsearch environment.</li>
+</ul>
+<p>This section provides step-by-step instructions to install the Couchbase Elasticsearch plugin.</p>
+<h2 id="plugin-pre-requisites">Plugin pre-requisites</h2>
+<ul>
+  <li>Java (see <a href="https://docs.oracle.com/javase/8/">installation guide</a>)</li>
+  <li>Download and install Elasticsearch =&lt; 5.x (see <a href="https://www.elastic.co/guide/en/elasticsearch/reference/5.6/install-elasticsearch.html">installation guide</a>, Elasticsearch 6.0 is not supported by the plugin)</li>
+  <li>Download and install Couchbase Server &gt;= 3.0 (see <a href="https://www.couchbase.com/downloads">installation guide</a>)</li>
+</ul>
+<p>Verify the Elasticsearch cluster is up and running (the default port is <code>9200</code>).</p>
+<pre><code class="lang-bash">$ curl localhost:9200
+
+{
+  &quot;name&quot; : &quot;K3RqW4F&quot;,
+  &quot;cluster_name&quot; : &quot;elasticsearch&quot;,
+  &quot;cluster_uuid&quot; : &quot;Bw-Ta0wDTcekzQIhXZHGkg&quot;,
+  &quot;version&quot; : {
+    &quot;number&quot; : &quot;5.6.5&quot;,
+    &quot;build_hash&quot; : &quot;6a37571&quot;,
+    &quot;build_date&quot; : &quot;2017-12-04T07:50:10.466Z&quot;,
+    &quot;build_snapshot&quot; : false,
+    &quot;lucene_version&quot; : &quot;6.6.1&quot;
+  },
+  &quot;tagline&quot; : &quot;You Know, for Search&quot;
+}
+</code></pre>
+<p>Verify that Couchbase Server is running.</p>
+<pre><code class="lang-bash">$ curl localhost:8092
+
+{&quot;couchdb&quot;:&quot;Welcome&quot;,&quot;version&quot;:&quot;v4.5.1-60-g3cf258d&quot;,&quot;couchbase&quot;:&quot;5.0.2-5506-community&quot;}
+</code></pre>
+<h2 id="installation">Installation</h2>
+<p>Navigate to the Elasticsearch installation directory.</p>
+<pre><code class="lang-bash">$ cd /usr/share/elasticsearch
+</code></pre>
+<p>Download and install the plug-in package.</p>
+<pre><code class="lang-bash">$ bin/elasticsearch-plugin install https://github.com/couchbaselabs/elasticsearch-transport-couchbase/releases/download/3.0.0-cypress/elasticsearch-transport-couchbase-3.0.0-cypress-es5.6.4.zip
+</code></pre>
+<p>Replace the plugin URL with the one that matches your Elasticsearch version; all URLs can be found on the <a href="https://github.com/couchbaselabs/elasticsearch-transport-couchbase/releases">releases page</a>.</p>
+<blockquote>
+  <p><strong>Note:</strong> If you&#39;re using Elasticsearch 2.x, the command to install plugins is <code>bin/plugin</code> instead of <code>bin/elastichsearch-plugin</code>.</p>
+</blockquote>
+<p>When the installation is successful, the message &quot;Installed transport-couchbase into /usr/share/elasticsearch/plugins/transport/couchbase&quot; will be logged.</p>
+<h2 id="configuration">Configuration</h2>
+<p>Open the Elasticsearch configuration file (<strong>/etc/elasticsearch/elasticsearch.yml</strong>) and add the following to the end of the file.</p>
+<pre><code class="lang-yaml">couchbase.username: &lt;USERNAME&gt;
+couchbase.password: &lt;PASSWORD&gt;
+couchbase.maxConcurrentRequests: 1024
+</code></pre>
+<p>The <strong>username</strong> and <strong>password</strong> credentials will be used again later when configuring Couchbase Server.</p>
+<p>Still in the <strong>/usr/share/elasticsearch</strong> directory, configure the Elasticsearch plugin with the following curl command.</p>
+<pre><code class="lang-bash">$ curl -X PUT http://localhost:9200/_template/couchbase -d @plugins/transport-couchbase/couchbase_template.json
+</code></pre>
+<p>When successful, the configuration-routine provides the following response: <code>{&quot;acknowledged&quot;:true}</code>.</p>
+<p>Create an Elasticsearch index to receive the data from the Couchbase bucket. Later, when configuring XDCR, the &quot;remote bucket name&quot; should match the Elasticsearch <strong>index name</strong>.</p>
+<pre><code class="lang-bash">$ curl -X PUT http://localhost:9200/travel-sample
+
+{&quot;acknowledged&quot;:true}
+</code></pre>
+<p>Now to configure Couchbase Server, open the Couchbase Web Console and select <strong>XDCR &gt; Add Remote Cluster</strong>.</p>
+<p><img src="images/xdcrInitial.png" alt=""></p>
+<p>In the dialog, enter the <strong>Cluster Name</strong> of your choice, the <strong>IP/hostname</strong> and port number where the Elasticsearch cluster is running (the Elasticsearch plugin listens on port 9091 by default) and the <strong>Username</strong>/<strong>Password</strong> previously stored in <strong>elasticsearch.yml</strong>.</p>
+<p><img src="images/remotecluster.png" alt=""></p>
+<p>Next, select the <strong>Add Replication</strong> option.</p>
+<p><img src="images/addreplication.png" alt=""></p>
+<p>On the pop-up window, enter the origin bucket, the remote cluster, and remote bucket (in this case it&#39;s the index that was created earlier). Also make sure that the <strong>XDCR Protocol</strong> version is set to 1 and that the <strong>XDCR Optimistic Replication Threshold</strong> is set to the maximum value of <strong>20971520</strong> for optimal performance. Then click <strong>Save</strong>.</p>
+<p><img src="images/addreplication-popup.png" alt=""></p>
+<p>Now that the replication is up and running, you can run full-text search queries on the Elasticsearch node.</p>
+<pre><code class="lang-bash">$ curl localhost:9200/travel-sample/_search?q=san+francisco
+
+{
+    &quot;took&quot;:5,
+    &quot;timed_out&quot;:false,
+    &quot;_shards&quot;:{&quot;total&quot;:5,&quot;successful&quot;:5,&quot;skipped&quot;:0,&quot;failed&quot;:0},
+    &quot;hits&quot;:{
+        &quot;total&quot;:1599,
+        &quot;max_score&quot;:11.965878,
+        &quot;hits&quot;:[
+            {&quot;_index&quot;:&quot;travel-sample&quot;,&quot;_type&quot;:&quot;couchbaseDocument&quot;,&quot;_id&quot;:&quot;landmark_36047&quot;,&quot;_score&quot;:11.965878,&quot;_source&quot;:{&quot;meta&quot;:{&quot;rev&quot;:&quot;1-1508c18bdbb400000000000002000000&quot;,&quot;flags&quot;:33554432,&quot;expiration&quot;:0,&quot;id&quot;:&quot;landmark_36047&quot;}}},
+            {&quot;_index&quot;:&quot;travel-sample&quot;,&quot;_type&quot;:&quot;couchbaseDocument&quot;,&quot;_id&quot;:&quot;landmark_25611&quot;,&quot;_score&quot;:11.905596,&quot;_source&quot;:{&quot;meta&quot;:{&quot;rev&quot;:&quot;1-1508c18bb43400000000000002000000&quot;,&quot;flags&quot;:33554432,&quot;expiration&quot;:0,&quot;id&quot;:&quot;landmark_25611&quot;}}},
+            {&quot;_index&quot;:&quot;travel-sample&quot;,&quot;_type&quot;:&quot;couchbaseDocument&quot;,&quot;_id&quot;:&quot;landmark_25712&quot;,&quot;_score&quot;:11.905596,&quot;_source&quot;:{&quot;meta&quot;:{&quot;rev&quot;:&quot;1-1508c18bb61e00000000000002000000&quot;,&quot;flags&quot;:33554432,&quot;expiration&quot;:0,&quot;id&quot;:&quot;landmark_25712&quot;}}}
+            ...
+        ]
+    }
+}
+</code></pre>
